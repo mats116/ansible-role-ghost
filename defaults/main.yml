@@ -1,0 +1,10 @@
+ghost_path: /etc/ghost
+ghost_user: ghost
+ghost_group: ghost
+
+ghost_mysql_host: localhost
+ghost_mysql_database: ghost
+ghost_mysql_user: ghost
+ghost_mysql_password: ghost
+
+ghost_nginx_accesslog: /var/log/nginx/ghost-access.log

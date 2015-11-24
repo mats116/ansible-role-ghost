@@ -1,0 +1,76 @@
+- name: install unzip
+  apt:
+    name: unzip
+    state: latest
+    force: yes
+
+- name: download ghost
+  get_url:
+    url: https://ghost.org/zip/ghost-latest.zip
+    dest: /usr/local/src/ghost.zip
+
+- name: modify group
+  group:
+    name: "{{ ghost_group }}"
+    system: yes
+    state: present
+
+- name: modify user
+  user:
+    name: "{{ ghost_user }}"
+    group: "{{ ghost_group }}"
+    home: "{{ ghost_path }}"
+    createhome: yes
+    shell: /bin/false
+    system: yes
+    state: present
+
+- name: modify directory
+  file:
+    path: "{{ ghost_path }}"
+    state: directory
+    owner: "{{ ghost_user }}"
+    group: "{{ ghost_group }}"
+    mode: 0755
+
+- name: unzip ghost
+  unarchive:
+    src: /usr/local/src/ghost.zip
+    dest: "{{ ghost_path }}"
+    creates: "{{ ghost_path }}/index.js"
+    owner: "{{ ghost_user }}"
+    group: "{{ ghost_group }}"
+    copy: no
+
+- name: npm install ghost
+  npm:
+    path: "{{ ghost_path }}"
+    production: yes
+    state: present
+  sudo_user: "{{ ghost_user }}"
+
+- include: nginx.yml
+- include: mysql.yml
+
+- name: modify config.js
+  template:
+    src: config.js
+    dest: "{{ ghost_path }}/config.js"
+    owner: "{{ ghost_user }}"
+    group: "{{ ghost_group }}"
+    mode: 0644
+  notify: restart ghost
+
+- name: modify init
+  template:
+    src: init
+    dest: /etc/init.d/ghost
+    owner: root
+    group: root
+    mode: 0755
+
+- name: ghost is enabled
+  service:
+    name: ghost
+    state: started
+    enabled: yes
